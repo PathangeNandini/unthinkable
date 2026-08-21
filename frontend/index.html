@@ -1,0 +1,329 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Smart Resume Screener</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link href="https://fonts.googleapis.com/css2?family=Newsreader:ital,wght@0,500;0,600;1,500&family=Inter:wght@400;500;600&family=JetBrains+Mono:wght@500;700&display=swap" rel="stylesheet">
+<style>
+  :root {
+    --ink: #1B2430;
+    --paper: #F7F5F0;
+    --panel: #FFFFFF;
+    --amber: #E8A33D;
+    --slate: #5B6B7C;
+    --line: #DCD8CE;
+    --success: #3F7D58;
+    --alert: #C4432B;
+  }
+  * { box-sizing: border-box; margin: 0; padding: 0; }
+  body {
+    background: var(--paper);
+    color: var(--ink);
+    font-family: 'Inter', sans-serif;
+    -webkit-font-smoothing: antialiased;
+  }
+  header {
+    border-bottom: 1px solid var(--line);
+    padding: 28px 40px;
+    display: flex;
+    align-items: baseline;
+    justify-content: space-between;
+  }
+  header h1 {
+    font-family: 'Newsreader', serif;
+    font-weight: 600;
+    font-size: 26px;
+    letter-spacing: -0.01em;
+  }
+  header .eyebrow {
+    font-family: 'JetBrains Mono', monospace;
+    font-size: 11px;
+    letter-spacing: 0.12em;
+    text-transform: uppercase;
+    color: var(--slate);
+    display: block;
+    margin-bottom: 4px;
+  }
+  .api-status { font-family: 'JetBrains Mono', monospace; font-size: 12px; color: var(--slate); }
+  .api-status.ok::before { content: "● "; color: var(--success); }
+  .api-status.down::before { content: "● "; color: var(--alert); }
+
+  main { max-width: 1100px; margin: 0 auto; padding: 40px; display: grid; grid-template-columns: 340px 1fr; gap: 32px; }
+  @media (max-width: 800px) { main { grid-template-columns: 1fr; } }
+
+  .panel {
+    background: var(--panel);
+    border: 1px solid var(--line);
+    border-radius: 4px;
+    padding: 24px;
+    margin-bottom: 24px;
+  }
+  .panel h2 {
+    font-family: 'Newsreader', serif;
+    font-size: 17px;
+    font-weight: 600;
+    margin-bottom: 4px;
+  }
+  .panel .sub { font-size: 12px; color: var(--slate); margin-bottom: 16px; }
+
+  label { display: block; font-size: 11px; font-weight: 600; text-transform: uppercase; letter-spacing: 0.06em; color: var(--slate); margin: 14px 0 6px; }
+  label:first-of-type { margin-top: 0; }
+  input[type=text], textarea, select {
+    width: 100%; padding: 10px 12px; border: 1px solid var(--line); border-radius: 3px;
+    font-family: 'Inter', sans-serif; font-size: 13px; background: var(--paper); color: var(--ink);
+  }
+  textarea { resize: vertical; min-height: 90px; }
+  input[type=file] { font-size: 12px; }
+  button {
+    margin-top: 16px; width: 100%; padding: 11px; border: none; border-radius: 3px;
+    background: var(--ink); color: var(--paper); font-weight: 600; font-size: 13px;
+    cursor: pointer; letter-spacing: 0.01em; transition: opacity 0.15s;
+  }
+  button:hover { opacity: 0.85; }
+  button:disabled { opacity: 0.4; cursor: not-allowed; }
+  button.accent { background: var(--amber); color: var(--ink); }
+
+  .msg { font-size: 12px; margin-top: 10px; padding: 8px 10px; border-radius: 3px; display: none; }
+  .msg.show { display: block; }
+  .msg.success { background: #e9f3ed; color: var(--success); }
+  .msg.error { background: #f8e9e5; color: var(--alert); }
+
+  .empty-state {
+    text-align: center; padding: 60px 20px; color: var(--slate);
+  }
+  .empty-state .eyebrow { font-family: 'JetBrains Mono', monospace; font-size: 11px; letter-spacing: 0.1em; text-transform: uppercase; }
+  .empty-state p { font-family: 'Newsreader', serif; font-size: 18px; margin-top: 8px; color: var(--ink); }
+
+  /* Candidate case-file cards */
+  .case {
+    background: var(--panel); border: 1px solid var(--line); border-radius: 4px;
+    padding: 20px 20px 20px 20px; margin-bottom: 14px; display: flex; gap: 18px; align-items: flex-start;
+    position: relative;
+  }
+  .stamp {
+    flex-shrink: 0; width: 56px; height: 56px; border-radius: 50%;
+    display: flex; align-items: center; justify-content: center; flex-direction: column;
+    font-family: 'JetBrains Mono', monospace; font-weight: 700;
+    border: 2px solid currentColor; transform: rotate(-4deg);
+  }
+  .stamp .num { font-size: 18px; line-height: 1; }
+  .stamp .of10 { font-size: 8px; opacity: 0.7; }
+  .stamp.tier-high { color: var(--success); }
+  .stamp.tier-mid { color: var(--amber); }
+  .stamp.tier-low { color: var(--alert); }
+
+  .case-body { flex: 1; min-width: 0; }
+  .case-body h3 { font-family: 'Newsreader', serif; font-size: 17px; font-weight: 600; }
+  .case-body .job-tag { font-size: 11px; color: var(--slate); font-family: 'JetBrains Mono', monospace; margin-top: 2px; }
+  .case-body .justification { font-size: 13px; margin-top: 10px; line-height: 1.55; }
+  .skill-row { margin-top: 12px; display: flex; gap: 6px; flex-wrap: wrap; }
+  .chip { font-size: 11px; padding: 3px 9px; border-radius: 12px; font-family: 'JetBrains Mono', monospace; }
+  .chip.matched { background: #e9f3ed; color: var(--success); }
+  .chip.missing { background: #f8e9e5; color: var(--alert); }
+
+  .toolbar { display: flex; gap: 10px; align-items: center; margin-bottom: 18px; }
+  .toolbar select { flex: 1; }
+  .toolbar button { width: auto; padding: 11px 18px; margin-top: 0; white-space: nowrap; }
+
+  .count-badge {
+    font-family: 'JetBrains Mono', monospace; font-size: 11px; color: var(--slate);
+    border: 1px solid var(--line); border-radius: 12px; padding: 3px 10px; margin-left: 8px;
+  }
+</style>
+</head>
+<body>
+
+<header>
+  <div>
+    <span class="eyebrow">Smart Resume Screener</span>
+    <h1>Screening Desk</h1>
+  </div>
+  <span class="api-status" id="apiStatus">checking API…</span>
+</header>
+
+<main>
+  <div>
+    <div class="panel">
+      <h2>Job Description</h2>
+      <div class="sub">Post a role to screen candidates against</div>
+      <label>Title</label>
+      <input type="text" id="jobTitle" placeholder="e.g. Senior Backend Engineer">
+      <label>Description</label>
+      <textarea id="jobText" placeholder="Paste the full job description…"></textarea>
+      <button id="createJobBtn">Save job description</button>
+      <div class="msg" id="jobMsg"></div>
+    </div>
+
+    <div class="panel">
+      <h2>Upload Resume</h2>
+      <div class="sub">PDF or TXT — parsed automatically by the LLM</div>
+      <label>Candidate name</label>
+      <input type="text" id="candName" placeholder="e.g. Jordan Lee">
+      <label>Resume file</label>
+      <input type="file" id="resumeFile" accept=".pdf,.txt">
+      <button id="uploadBtn">Upload & parse</button>
+      <div class="msg" id="uploadMsg"></div>
+    </div>
+  </div>
+
+  <div>
+    <div class="panel">
+      <h2>Shortlist</h2>
+      <div class="sub">Ranked by LLM-computed fit score</div>
+      <div class="toolbar">
+        <select id="jobSelect"><option value="">Select a job description…</option></select>
+        <button class="accent" id="runMatchBtn">Run matching<span class="count-badge" id="candCount">0 candidates</span></button>
+      </div>
+      <div id="results"><div class="empty-state"><span class="eyebrow">No results yet</span><p>Save a job and upload resumes to begin.</p></div></div>
+    </div>
+  </div>
+</main>
+
+<script>
+const API_BASE = "http://localhost:8000";
+
+async function api(path, options = {}) {
+  const res = await fetch(API_BASE + path, options);
+  if (!res.ok) {
+    const err = await res.json().catch(() => ({ detail: res.statusText }));
+    throw new Error(err.detail || "Request failed");
+  }
+  return res.json();
+}
+
+function showMsg(el, text, type) {
+  el.textContent = text;
+  el.className = `msg show ${type}`;
+  setTimeout(() => el.classList.remove("show"), 4000);
+}
+
+async function checkApi() {
+  const el = document.getElementById("apiStatus");
+  try {
+    await api("/");
+    el.textContent = "API connected";
+    el.className = "api-status ok";
+  } catch {
+    el.textContent = "API unreachable — is the backend running?";
+    el.className = "api-status down";
+  }
+}
+
+async function refreshJobs() {
+  const jobs = await api("/job-descriptions").catch(() => []);
+  const sel = document.getElementById("jobSelect");
+  sel.innerHTML = '<option value="">Select a job description…</option>' +
+    jobs.map(j => `<option value="${j.id}">${j.title}</option>`).join("");
+}
+
+async function refreshCandidateCount() {
+  const candidates = await api("/candidates").catch(() => []);
+  document.getElementById("candCount").textContent = `${candidates.length} candidate${candidates.length === 1 ? "" : "s"}`;
+}
+
+document.getElementById("createJobBtn").addEventListener("click", async () => {
+  const title = document.getElementById("jobTitle").value.trim();
+  const raw_text = document.getElementById("jobText").value.trim();
+  const msgEl = document.getElementById("jobMsg");
+  if (!title || !raw_text) return showMsg(msgEl, "Title and description are required.", "error");
+  try {
+    await api("/job-descriptions", {
+      method: "POST",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify({ title, raw_text }),
+    });
+    showMsg(msgEl, "Job description saved.", "success");
+    document.getElementById("jobTitle").value = "";
+    document.getElementById("jobText").value = "";
+    refreshJobs();
+  } catch (e) {
+    showMsg(msgEl, e.message, "error");
+  }
+});
+
+document.getElementById("uploadBtn").addEventListener("click", async () => {
+  const name = document.getElementById("candName").value.trim();
+  const fileInput = document.getElementById("resumeFile");
+  const msgEl = document.getElementById("uploadMsg");
+  if (!name || !fileInput.files.length) return showMsg(msgEl, "Name and a resume file are required.", "error");
+
+  const formData = new FormData();
+  formData.append("name", name);
+  formData.append("file", fileInput.files[0]);
+
+  const btn = document.getElementById("uploadBtn");
+  btn.disabled = true; btn.textContent = "Parsing with LLM…";
+  try {
+    await api("/candidates/upload", { method: "POST", body: formData });
+    showMsg(msgEl, "Resume parsed and stored.", "success");
+    document.getElementById("candName").value = "";
+    fileInput.value = "";
+    refreshCandidateCount();
+  } catch (e) {
+    showMsg(msgEl, e.message, "error");
+  } finally {
+    btn.disabled = false; btn.textContent = "Upload & parse";
+  }
+});
+
+document.getElementById("runMatchBtn").addEventListener("click", async () => {
+  const jobId = document.getElementById("jobSelect").value;
+  const resultsEl = document.getElementById("results");
+  if (!jobId) return alert("Select a job description first.");
+
+  const btn = document.getElementById("runMatchBtn");
+  btn.disabled = true;
+  resultsEl.innerHTML = '<div class="empty-state"><span class="eyebrow">Working</span><p>Scoring candidates…</p></div>';
+  try {
+    const results = await api("/match", {
+      method: "POST",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify({ job_id: parseInt(jobId) }),
+    });
+    renderResults(results);
+  } catch (e) {
+    resultsEl.innerHTML = `<div class="empty-state"><span class="eyebrow">Error</span><p>${e.message}</p></div>`;
+  } finally {
+    btn.disabled = false;
+  }
+});
+
+function tierClass(score) {
+  if (score >= 7) return "tier-high";
+  if (score >= 4) return "tier-mid";
+  return "tier-low";
+}
+
+function renderResults(results) {
+  const resultsEl = document.getElementById("results");
+  if (!results.length) {
+    resultsEl.innerHTML = '<div class="empty-state"><span class="eyebrow">No matches</span><p>Upload some resumes first.</p></div>';
+    return;
+  }
+  resultsEl.innerHTML = results.map(r => `
+    <div class="case">
+      <div class="stamp ${tierClass(r.score)}">
+        <div class="num">${r.score.toFixed(1)}</div>
+        <div class="of10">/ 10</div>
+      </div>
+      <div class="case-body">
+        <h3>${r.candidate_name}</h3>
+        <div class="job-tag">matched against — ${r.job_title}</div>
+        <div class="justification">${r.justification}</div>
+        <div class="skill-row">
+          ${r.matched_skills.map(s => `<span class="chip matched">${s}</span>`).join("")}
+          ${r.missing_skills.map(s => `<span class="chip missing">${s}</span>`).join("")}
+        </div>
+      </div>
+    </div>
+  `).join("");
+}
+
+checkApi();
+refreshJobs();
+refreshCandidateCount();
+</script>
+</body>
+</html>
