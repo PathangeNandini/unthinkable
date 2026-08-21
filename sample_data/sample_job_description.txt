@@ -1,0 +1,18 @@
+Title: Backend Engineer (Python)
+
+We're looking for a Backend Engineer to join our platform team. You'll design
+and build APIs that power our core product, work closely with data and ML
+teams, and help scale our infrastructure as we grow.
+
+Requirements:
+- 3+ years of experience building backend services in Python
+- Strong understanding of REST API design
+- Experience with relational databases (PostgreSQL or similar) and SQL
+- Familiarity with cloud platforms (AWS, GCP, or Azure)
+- Experience with Docker and containerized deployments
+- Bachelor's degree in Computer Science or equivalent practical experience
+
+Nice to have:
+- Experience with FastAPI or Flask
+- Exposure to LLM/AI-powered features
+- CI/CD pipeline experience

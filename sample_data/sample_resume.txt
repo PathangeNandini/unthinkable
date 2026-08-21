@@ -1,0 +1,25 @@
+Jordan Lee
+jordan.lee@email.com | (555) 123-4567 | linkedin.com/in/jordanlee
+
+SUMMARY
+Backend-focused software engineer with 4 years of experience building
+and scaling REST APIs and data pipelines in Python.
+
+EXPERIENCE
+Backend Engineer — Northwind Logistics (2022–Present)
+- Built and maintained REST APIs serving 2M+ requests/day using FastAPI
+- Migrated legacy MySQL database to PostgreSQL, improving query performance by 40%
+- Deployed services using Docker and AWS ECS, set up CI/CD with GitHub Actions
+- Collaborated with the data science team to integrate a recommendation model into the product API
+
+Software Engineer — Brightwave Analytics (2020–2022)
+- Developed internal tooling in Python and Flask for the analytics team
+- Wrote SQL queries and stored procedures against a PostgreSQL warehouse
+- Participated in on-call rotation and incident response
+
+EDUCATION
+B.S. Computer Science — State University (2020)
+
+SKILLS
+Python, FastAPI, Flask, PostgreSQL, MySQL, Docker, AWS (ECS, S3, RDS),
+Git, GitHub Actions, REST API design, SQL, Redis
