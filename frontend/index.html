@@ -131,6 +131,28 @@
     font-family: 'JetBrains Mono', monospace; font-size: 11px; color: var(--slate);
     border: 1px solid var(--line); border-radius: 12px; padding: 3px 10px; margin-left: 8px;
   }
+
+  .candidate-list { margin-top: 14px; }
+  .candidate-item {
+    display: flex; align-items: center; justify-content: space-between;
+    gap: 12px; padding: 10px 0; border-top: 1px solid var(--line);
+  }
+  .candidate-info { min-width: 0; }
+  .candidate-info strong {
+    display: block; font-family: 'Newsreader', serif; font-size: 15px;
+  }
+  .candidate-info span {
+    display: block; margin-top: 2px; font-size: 11px; color: var(--slate);
+    white-space: nowrap; overflow: hidden; text-overflow: ellipsis;
+  }
+  .delete-btn {
+    width: auto; margin-top: 0; padding: 7px 10px;
+    background: transparent; color: var(--alert);
+    border: 1px solid #e4b9b0; font-size: 11px; flex-shrink: 0;
+  }
+  .delete-btn:hover { background: #f8e9e5; opacity: 1; }
+  .candidate-empty { font-size: 12px; color: var(--slate); padding-top: 8px; }
+
 </style>
 </head>
 <body>
@@ -165,6 +187,13 @@
       <input type="file" id="resumeFile" accept=".pdf,.txt">
       <button id="uploadBtn">Upload & parse</button>
       <div class="msg" id="uploadMsg"></div>
+    </div>
+    <div class="panel">
+      <h2>Uploaded Candidates</h2>
+      <div class="sub">Manage resumes already stored in the database</div>
+      <div id="candidateList" class="candidate-list">
+        <div class="candidate-empty">Loading candidates…</div>
+      </div>
     </div>
   </div>
 
@@ -218,9 +247,57 @@ async function refreshJobs() {
     jobs.map(j => `<option value="${j.id}">${j.title}</option>`).join("");
 }
 
-async function refreshCandidateCount() {
+async function refreshCandidates() {
   const candidates = await api("/candidates").catch(() => []);
-  document.getElementById("candCount").textContent = `${candidates.length} candidate${candidates.length === 1 ? "" : "s"}`;
+
+  document.getElementById("candCount").textContent =
+    `${candidates.length} candidate${candidates.length === 1 ? "" : "s"}`;
+
+  const list = document.getElementById("candidateList");
+
+  if (!candidates.length) {
+    list.innerHTML = '<div class="candidate-empty">No resumes uploaded yet.</div>';
+    return;
+  }
+
+  list.innerHTML = candidates.map(c => `
+    <div class="candidate-item">
+      <div class="candidate-info">
+        <strong>${escapeHtml(c.name)}</strong>
+        <span>${escapeHtml(c.filename || "Resume")}</span>
+      </div>
+      <button class="delete-btn" onclick="deleteCandidate(${c.id}, '${escapeJs(c.name)}')">
+        Delete
+      </button>
+    </div>
+  `).join("");
+}
+
+function escapeHtml(value) {
+  return String(value ?? "")
+    .replace(/&/g, "&amp;")
+    .replace(/</g, "&lt;")
+    .replace(/>/g, "&gt;")
+    .replace(/"/g, "&quot;")
+    .replace(/'/g, "&#039;");
+}
+
+function escapeJs(value) {
+  return String(value ?? "").replace(/\\/g, "\\\\").replace(/'/g, "\\'");
+}
+
+async function deleteCandidate(candidateId, candidateName) {
+  if (!confirm(`Delete ${candidateName}'s resume?`)) return;
+
+  try {
+    await api(`/candidates/${candidateId}`, { method: "DELETE" });
+    await refreshCandidates();
+
+    document.getElementById("results").innerHTML =
+      '<div class="empty-state"><span class="eyebrow">Candidate deleted</span><p>Run matching again to refresh the shortlist.</p></div>';
+  } catch (e) {
+    alert(`Could not delete candidate: ${e.message}`);
+  }
 }
 
 document.getElementById("createJobBtn").addEventListener("click", async () => {
@@ -260,7 +337,7 @@ document.getElementById("uploadBtn").addEventListener("click", async () => {
     showMsg(msgEl, "Resume parsed and stored.", "success");
     document.getElementById("candName").value = "";
     fileInput.value = "";
-    refreshCandidateCount();
+    refreshCandidates();
   } catch (e) {
     showMsg(msgEl, e.message, "error");
   } finally {
@@ -323,7 +400,7 @@ function renderResults(results) {
 
 checkApi();
 refreshJobs();
-refreshCandidateCount();
+refreshCandidates();
 </script>
 </body>
 </html>
