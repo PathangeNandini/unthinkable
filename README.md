@@ -1,3 +1,15 @@
+## 🚀 Live Demo
+
+Try the deployed application:
+
+👉 https://smart-resumescreener.netlify.app/
+
+For an easy test, use the sample job description provided in:
+
+`sample_data/Sample_Job_Description.pdf`
+
+You can upload any suitable resume and run the matching process to see the candidate score, justification, matched skills, and missing skills.
+
 # Smart Resume Screener
 
 Smart Resume Screener is a full-stack application that helps recruiters evaluate multiple candidates against job descriptions.
