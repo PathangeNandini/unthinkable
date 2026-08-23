@@ -102,10 +102,34 @@ def list_candidates(db: Session = Depends(get_db)):
 @app.get("/candidates/{candidate_id}", response_model=schemas.CandidateOut)
 def get_candidate(candidate_id: int, db: Session = Depends(get_db)):
     candidate = db.query(models.Candidate).filter(models.Candidate.id == candidate_id).first()
+
     if not candidate:
         raise HTTPException(status_code=404, detail="Candidate not found")
+
     return candidate
 
+
+@app.delete("/candidates/{candidate_id}")
+def delete_candidate(candidate_id: int, db: Session = Depends(get_db)):
+    candidate = (
+        db.query(models.Candidate)
+        .filter(models.Candidate.id == candidate_id)
+        .first()
+    )
+
+    if not candidate:
+        raise HTTPException(
+            status_code=404,
+            detail="Candidate not found"
+        )
+
+    db.delete(candidate)
+    db.commit()
+
+    return {
+        "message": "Candidate deleted successfully",
+        "candidate_id": candidate_id
+    }
 
 # ---------------------------------------------------------------------------
 # Matching
